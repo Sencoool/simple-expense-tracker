@@ -7,20 +7,20 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const categoryId = parseInt(id);
-    const data = await prisma.category.findUnique({
+    const expenseId = parseInt(id);
+    const data = await prisma.expense.findUnique({
       where: {
-        id: categoryId,
+        id: expenseId,
       },
       include: {
-        expenses: true, // Include expenses table
+        category: true, // Include category table
       },
     });
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
@@ -32,21 +32,22 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const categoryId = parseInt(id);
-    const { name } = await request.json();
-    const updatedData = await prisma.category.update({
+    const expenseId = parseInt(id);
+    const { categoryId, amount, description } = await request.json();
+    const updatedData = await prisma.expense.update({
       where: {
-        id: categoryId,
+        id: expenseId,
       },
       data: {
-        name,
+        categoryId,
+        amount,
+        description,
       },
     });
-
     return NextResponse.json({ updatedData }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
@@ -58,17 +59,17 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const categoryId = parseInt(id);
-    await prisma.category.delete({
+    const expenseId = parseInt(id);
+    await prisma.expense.delete({
       where: {
-        id: categoryId,
+        id: expenseId,
       },
     });
 
-    return NextResponse.json({ message: "Category deleted successfully" });
+    return NextResponse.json({ message: "Expense deleted successfully" });
   } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }

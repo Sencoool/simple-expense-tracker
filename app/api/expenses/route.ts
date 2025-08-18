@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const data = await prisma.category.findMany({
+    const data = await prisma.expense.findMany({
       include: {
-        expenses: true, // Include expenses table
+        category: true, // Include category table
       },
     });
     return NextResponse.json({ data }, { status: 200 });
@@ -19,16 +19,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name } = await request.json();
-    const category = await prisma.category.create({
+    const { categoryId, amount, description } = await request.json();
+    const expense = await prisma.expense.create({
       data: {
-        name,
+        categoryId,
+        amount,
+        description,
       },
     });
-    return NextResponse.json({ category }, { status: 201 });
+    return NextResponse.json({ expense }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to create category" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }

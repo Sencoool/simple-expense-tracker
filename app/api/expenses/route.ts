@@ -21,14 +21,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { categoryId, amount, description } = await request.json();
-    await prisma.expense.create({
+    const expense = await prisma.expense.create({
       data: {
         categoryId,
         amount,
         description,
       },
     });
-    revalidatePath("/");
+    revalidatePath(`${process.env.API_URL}/`);
+    return NextResponse.json({ expense }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { message: "Internal Server Error" },

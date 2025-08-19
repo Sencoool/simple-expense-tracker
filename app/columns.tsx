@@ -6,15 +6,20 @@ import { ColumnDef } from "@tanstack/react-table";
 export type Payment = {
   amount: number;
   category: string;
+  description: string;
 };
 
 export const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: "category.name",
-    header: "Category",
+    header: "ประเภทการใช้จ่าย",
   },
   {
     accessorKey: "amount",
-    header: "Amount",
+    header: "จำนวนเงิน",
+  },
+  {
+    accessorKey: "description",
+    header: "คำอธิบาย",
   },
 ];

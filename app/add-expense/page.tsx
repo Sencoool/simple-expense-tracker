@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as React from "react";
 
 import {
@@ -16,16 +16,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-// Assume the category data structure looks like this
 interface Category {
-  id: number; // Changed from string to number
+  id: number; //
   name: string;
 }
 
 export default function AddExpensePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [payload, setPayload] = useState({
-    category: "", // This will now store the category ID as a string
+    category: "", // category need to be string because we will use it in select option
     amount: "",
     description: "",
   });
@@ -71,13 +70,12 @@ export default function AddExpensePage() {
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     console.log("Form submitted with data:", payload);
-    // You'd typically convert the string ID to a number here before sending to the server
+
     const submitPayload = {
       ...payload,
-      amount: parseFloat(payload.amount), // Convert amount to a number
-      categoryId: Number(payload.category), // Convert category ID to a number
+      amount: parseFloat(payload.amount),
+      categoryId: Number(payload.category), // Parse (category ID) from to a number
     };
 
     console.log("Payload to be sent to server:", submitPayload);

@@ -4,6 +4,7 @@ import { DataTable } from "./data-table";
 async function fetchExpenses() {
   try {
     const response = await fetch(`${process.env.API_URL}/expenses`);
+
     const data = await response.json(); // parse JSON response into object
 
     if (!response.ok) {
@@ -21,8 +22,12 @@ export default async function DashboardPage() {
   const expenses = await fetchExpenses();
 
   return (
-    <div className="container mx-auto py-10">
-      <DataTable columns={columns} data={expenses} />
+    <div>
+      <div>Dashboard แสดงรายจ่าย</div>
+
+      <div className="container mx-auto py-10">
+        <DataTable columns={columns} data={expenses} />
+      </div>
     </div>
   );
 }

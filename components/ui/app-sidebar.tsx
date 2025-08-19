@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Home, ClipboardPlusIcon } from "lucide-react";
 
 import {
@@ -15,12 +16,12 @@ import {
 const items = [
   {
     title: "หน้าหลัก",
-    url: "#",
+    url: "/",
     icon: Home,
   },
   {
     title: "เพิ่มรายการค่าใช้จ่ายใหม่",
-    url: "#",
+    url: "add-expense",
     icon: ClipboardPlusIcon,
   },
 ];
@@ -36,10 +37,10 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

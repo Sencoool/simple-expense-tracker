@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   try {
@@ -20,14 +21,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { categoryId, amount, description } = await request.json();
-    const expense = await prisma.expense.create({
+    await prisma.expense.create({
       data: {
         categoryId,
         amount,
         description,
       },
     });
-    return NextResponse.json({ expense }, { status: 201 });
+    revalidatePath("/");
   } catch (error) {
     return NextResponse.json(
       { message: "Internal Server Error" },

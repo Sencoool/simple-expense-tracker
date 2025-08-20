@@ -1,9 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import Link from "next/link"; // ✅ Import Link from Next.js
-
+import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,8 +11,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-// This type is used to define the shape of our data.
 export type Payment = {
   id: string;
   amount: number;
@@ -23,8 +33,8 @@ export type Payment = {
   date: Date;
 };
 
-// Add column here
 export const columns: ColumnDef<Payment>[] = [
+  // ... (existing columns)
   {
     accessorKey: "category.name",
     header: "ประเภทการใช้จ่าย",
@@ -39,7 +49,7 @@ export const columns: ColumnDef<Payment>[] = [
         currency: "THB",
       }).format(amount);
 
-      return <div className="font-medium">{formatted}</div>;
+      return <div className="text-right font-medium">{formatted}</div>;
     },
   },
   {
@@ -48,8 +58,16 @@ export const columns: ColumnDef<Payment>[] = [
   },
   {
     accessorKey: "date",
-    header: "วันที่",
-
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          วันที่
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const date = row.original.date;
       return (
@@ -68,7 +86,27 @@ export const columns: ColumnDef<Payment>[] = [
     header: () => <div className="text-center">การจัดการ</div>,
     cell: ({ row }) => {
       const expense = row.original;
+      const router = useRouter();
+      const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+      const handleDelete = async () => {
+        try {
+          const response = await fetch(`/api/expenses/${expense.id}`, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            console.log("Expense deleted successfully!");
+            router.refresh();
+          } else {
+            console.error("Failed to delete expense");
+          }
+        } catch (error) {
+          console.error("Error deleting expense:", error);
+        } finally {
+          setShowDeleteDialog(false);
+        }
+      };
       return (
         <div className="text-center">
           <DropdownMenu>
@@ -80,17 +118,36 @@ export const columns: ColumnDef<Payment>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
-              {/* ✅ แก้ไขปุ่ม "แก้ไข" ให้เป็น Link */}
-              <Link href={`/edit-expense/${expense.id}`}>
+              <Link href={`/${expense.id}`}>
                 <DropdownMenuItem>แก้ไข</DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />
-              {/* ✅ แก้ไขปุ่ม "ลบ" ให้เป็น Link */}
-              <Link href={`/delete-expense/${expense.id}`}>
-                <DropdownMenuItem>ลบ</DropdownMenuItem>
-              </Link>
+              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
+                ลบ
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <AlertDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
+                <AlertDialogDescription>
+                  คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
+                  การกระทำนี้ไม่สามารถยกเลิกได้.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  ยืนยัน
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       );
     },

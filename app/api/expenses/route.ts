@@ -24,6 +24,13 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Get Pagination parameters
+    const page = parseInt(searchParams.get("page") || "1"); // Default to page 1
+    const limit = parseInt(searchParams.get("limit") || "10"); // Default to 10 items per page
+
+    // Calculate the number of items to skip
+    const skip = (page - 1) * limit;
+
     const data = await prisma.expense.findMany({
       where: where, // filter condition
       include: {
@@ -32,9 +39,23 @@ export async function GET(request: NextRequest) {
       orderBy: {
         date: "desc",
       },
+      skip: skip, // skip each 10 records
+      take: limit,
     });
 
-    return NextResponse.json({ data }, { status: 200 });
+    // Get the total count of filtered items for pagination info
+    const totalCount = await prisma.expense.count({ where });
+
+    return NextResponse.json(
+      {
+        data,
+        total: totalCount,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

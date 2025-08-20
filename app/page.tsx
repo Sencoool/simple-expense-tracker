@@ -1,18 +1,18 @@
-// DashboardPage.tsx
+import Link from "next/link";
 
-import Link from "next/link"; // Use Link for navigation
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/ui/columns";
 import { ChartPieDonutText } from "@/components/ui/pie-chart-donut";
 import { ChartBarInteractive } from "@/components/ui/chart-bar-interactive";
 import { DatePickerWithFilter } from "@/components/ui/date-picker";
+import { Pagination } from "@/components/ui/pagination";
 
 // Type definition for an expense item
 type Expense = {
   description: string;
   amount: number;
   date: Date;
-  category: string; // api returns category name
+  category: string;
 };
 
 type PieChartData = {
@@ -26,40 +26,58 @@ type Category = {
   expenses: Expense[];
 };
 
+type ExpenseResponse = {
+  data: Expense[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
 // Data fetching function for the server component
-// แก้ไขให้รับ sortBy และ dateFilter
 async function fetchExpenses(
   sortBy: string = "date",
-  dateFilter?: string
-): Promise<Expense[]> {
+  dateFilter?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<ExpenseResponse> {
   try {
-    // สร้าง URL object เพื่อจัดการพารามิเตอร์ได้อย่างง่ายดาย
     const url = new URL(`${process.env.API_URL}/expenses`);
     url.searchParams.append("sortBy", sortBy);
+    url.searchParams.append("page", page.toString());
+    url.searchParams.append("limit", limit.toString());
+
     if (dateFilter) {
       url.searchParams.append("date", dateFilter);
     }
 
     const response = await fetch(url.toString(), {
-      cache: "no-store", // Ensures data is always fresh on each request
+      cache: "no-store",
     });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch expenses: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const expenses = data.data;
-
-    const expensesWithFormattedDate = expenses.map((expense: Expense) => ({
+    const data: ExpenseResponse = await response.json();
+    const expensesWithFormattedDate = data.data.map((expense: Expense) => ({
       ...expense,
-      date: new Date(expense.date), // Converts the date string from the API into a JavaScript Date object
+      date: new Date(expense.date),
     }));
 
-    return expensesWithFormattedDate;
+    return {
+      ...data,
+      data: expensesWithFormattedDate,
+    };
   } catch (error) {
     console.error("Error fetching expenses", error);
-    return [];
+    return {
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+    };
   }
 }
 
@@ -67,7 +85,6 @@ async function fetchExpenses(
 async function fetchPieChartData(): Promise<PieChartData[]> {
   try {
     const response = await fetch(
-      // Your API endpoint that returns the data with expenses array
       `${process.env.API_URL}/categories/pie-chart-summary`,
       {
         cache: "no-store",
@@ -79,13 +96,11 @@ async function fetchPieChartData(): Promise<PieChartData[]> {
     }
 
     const data = await response.json();
-
-    // The data transformation logic
     const pieChartData: PieChartData[] = data.data.map(
       (category: Category, index: number) => ({
-        categoryName: category.name, // The name of the category
-        visitors: category.expenses.length, // The count of expenses
-        fill: `var(--chart-${index + 1})`, // The color of each category
+        categoryName: category.name,
+        visitors: category.expenses.length,
+        fill: `var(--chart-${index + 1})`,
       })
     );
 
@@ -96,22 +111,17 @@ async function fetchPieChartData(): Promise<PieChartData[]> {
   }
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+export default async function DashboardPage({ searchParams }: any) {
   const sortBy = (searchParams?.sortBy as string) || "date";
-  // ดึงค่า 'date' จาก URL parameter และเก็บไว้ในตัวแปร dateFilter
   const dateFilter = (searchParams?.date as string) || undefined;
+  const page = parseInt(searchParams?.page as string) || 1;
+  const limit = parseInt(searchParams?.limit as string) || 10;
 
-  // ส่งทั้ง sortBy และ dateFilter ไปให้ fetchExpenses
-  const expenses: Expense[] = await fetchExpenses(sortBy, dateFilter);
+  const expenseData = await fetchExpenses(sortBy, dateFilter, page, limit);
   const pieChartData: PieChartData[] = await fetchPieChartData();
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
-      {/* Header */}
       <div className="bg-white shadow-sm border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -131,20 +141,15 @@ export default async function DashboardPage({
       </div>
 
       <div className="container mx-auto py-8">
-        {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Chart 1 - Pie Chart */}
           <div className="bg-white rounded-xl shadow-sm p-6 border">
             <ChartPieDonutText chartData={pieChartData} />
           </div>
-
-          {/* Chart 2 - Trend Line */}
           <div className="bg-white rounded-xl shadow-sm p-6 border">
             <ChartBarInteractive />
           </div>
         </div>
 
-        {/* Data Table Section */}
         <div className="bg-white rounded-xl shadow-sm border">
           <div className="p-6 border-b">
             <div className="flex items-center justify-between">
@@ -152,12 +157,18 @@ export default async function DashboardPage({
                 รายจ่ายล่าสุด
               </h3>
               <div className="flex items-center space-x-3">
-                {/* Datepicker component handle params change */}
                 <DatePickerWithFilter />
               </div>
             </div>
           </div>
-          <DataTable columns={columns} data={expenses} />
+          <DataTable columns={columns} data={expenseData.data} />
+          <div className="py-4 flex justify-center">
+            <Pagination
+              currentPage={expenseData.page}
+              totalPages={expenseData.totalPages}
+              totalItems={expenseData.total}
+            />
+          </div>
         </div>
       </div>
     </div>

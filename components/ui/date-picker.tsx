@@ -22,9 +22,9 @@ export function DatePickerWithFilter() {
     dateParam ? new Date(dateParam) : undefined
   );
 
-  // ใช้ useEffect เพื่อตรวจจับการเปลี่ยนแปลงของวันที่
+  // useEffect for detect date change
   React.useEffect(() => {
-    // สร้าง URLSearchParams ใหม่ เพื่อจัดการพารามิเตอร์ได้อย่างปลอดภัย
+    // create new URLSearchParams to handle params search
     const newSearchParams = new URLSearchParams(searchParams.toString());
     if (date) {
       const formattedDate = format(date, "yyyy-MM-dd");
@@ -46,7 +46,11 @@ export function DatePickerWithFilter() {
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>เลือกวัน</span>}
+          {date ? (
+            format(date, "PPP")
+          ) : (
+            <span>เลือกวันที่ต้องการดูรายจ่าย</span>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

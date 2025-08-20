@@ -1,27 +1,28 @@
-import {
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  Filter,
-  Search,
-  MoreHorizontal,
-  Eye,
-} from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import Link from "next/link"; // Use Link for navigation
 
-// Assuming these are your components
-import { DataTable } from "./data-table"; // Your table component
-import { columns } from "./columns"; // Your table column definitions
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "@/components/ui/columns";
+import { ChartPieDonutText } from "@/components/ui/pie-chart-donut";
+import { ChartLineLabel } from "@/components/ui/chart-line-label";
 
 // Type definition for an expense item
 type Expense = {
-  id: string;
   description: string;
   amount: number;
-  date: string;
-  category: string; // Assuming the API returns the category name
+  date: Date;
+  category: string; // api returns category name
+};
+
+type PieChartData = {
+  categoryName: string;
+  visitors: number;
+  fill: string;
+};
+
+type Category = {
+  name: String;
+  expenses: Expense[];
 };
 
 // Data fetching function for the server component
@@ -36,15 +37,56 @@ async function fetchExpenses(): Promise<Expense[]> {
     }
 
     const data = await response.json();
-    return data.data || [];
+    const expenses = data.data;
+
+    const expensesWithFormattedDate = expenses.map((expense: Expense) => ({
+      ...expense,
+      date: new Date(expense.date), // Converts the date string from the API into a JavaScript Date object
+    }));
+
+    return expensesWithFormattedDate;
   } catch (error) {
     console.error("Error fetching expenses", error);
     return [];
   }
 }
 
+// Data fetching function for the pie chart
+async function fetchPieChartData(): Promise<PieChartData[]> {
+  try {
+    const response = await fetch(
+      // Your API endpoint that returns the data with expenses array
+      `${process.env.API_URL}/categories/pie-chart-summary`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pie chart data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // The data transformation logic
+    const pieChartData: PieChartData[] = data.data.map(
+      (category: Category, index: number) => ({
+        categoryName: category.name, // The name of the category
+        visitors: category.expenses.length, // The count of expenses
+        fill: `var(--chart-${index + 1})`, // The color of each category
+      })
+    );
+
+    return pieChartData;
+  } catch (error) {
+    console.error("Error fetching pie chart data", error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   const expenses: Expense[] = await fetchExpenses();
+  const pieChartData: PieChartData[] = await fetchPieChartData();
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -59,7 +101,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center space-x-3">
             <Link href="/add-expense">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
                 + เพิ่มรายจ่าย
               </button>
             </Link>
@@ -70,43 +112,14 @@ export default async function DashboardPage() {
       <div className="container mx-auto py-8">
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Chart 1 - Bar Chart */}
+          {/* Chart 1 - Pie Chart */}
           <div className="bg-white rounded-xl shadow-sm p-6 border">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                รายจ่ายตามหมวดหมู่
-              </h3>
-              <button className="text-gray-400 hover:text-gray-600">
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-            </div>
-            {/* Dynamic Bar Chart based on fetched data */}
-            <div className="space-y-4">
-              {/* You would replace this with a real charting library like Recharts or a custom component */}
-              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-                <BarChart3 className="w-12 h-12 mb-2" />
-                <p>กราฟจะแสดงที่นี่</p>
-              </div>
-            </div>
+            <ChartPieDonutText chartData={pieChartData} />
           </div>
 
           {/* Chart 2 - Trend Line */}
           <div className="bg-white rounded-xl shadow-sm p-6 border">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                แนวโน้มรายจ่าย (7 วัน)
-              </h3>
-              <select className="text-sm border rounded-lg px-3 py-1">
-                <option>7 วัน</option>
-                <option>30 วัน</option>
-                <option>90 วัน</option>
-              </select>
-            </div>
-            {/* Dynamic Line Chart based on fetched data */}
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-              <TrendingUp className="w-12 h-12 mb-2" />
-              <p>แนวโน้มรายจ่ายจะแสดงที่นี่</p>
-            </div>
+            <ChartLineLabel />
           </div>
         </div>
 
@@ -115,7 +128,7 @@ export default async function DashboardPage() {
           <div className="p-6 border-b">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
-                รายการรายจ่ายล่าสุด
+                รายจ่ายล่าสุด
               </h3>
               <div className="flex items-center space-x-3">
                 <div className="relative">

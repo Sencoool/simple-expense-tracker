@@ -25,14 +25,13 @@ export async function GET() {
       },
     });
 
-    // Use 'reduce' to group and sum expenses for the same day
-    // The accumulator 'acc' is an object where keys are dates and values are total amounts
     const expenseSummary = expenses.reduce((acc, expense) => {
       // Convert the Date object to a string based on local time zone
       const dateKey = new Date(expense.date).toLocaleDateString("en-CA", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
+        timeZone: "Asia/Bangkok",
       });
       // If the date key doesn't exist, it defaults to 0 before adding the current amount.
       acc[dateKey] = (acc[dateKey] || 0) + expense.amount;

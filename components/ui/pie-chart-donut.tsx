@@ -78,36 +78,37 @@ export function ChartPieDonutText({ chartData }: ChartProps) {
               nameKey="categoryName"
               innerRadius={60}
               strokeWidth={5}
-            />
-            <Label
-              content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                  return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
+            >
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-foreground text-3xl font-bold"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
                       >
-                        {totalVisitors.toLocaleString()}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 24}
-                        className="fill-muted-foreground"
-                      >
-                        รายการ
-                      </tspan>
-                    </text>
-                  );
-                }
-              }}
-            />
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-3xl font-bold"
+                        >
+                          {totalVisitors.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 24}
+                          className="fill-muted-foreground"
+                        >
+                          รายจ่ายทั้งหมด
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </Pie>
             <ChartLegend
               content={<ChartLegendContent nameKey="categoryName" />}
               className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"

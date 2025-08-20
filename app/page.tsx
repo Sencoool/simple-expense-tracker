@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/ui/columns";
 import { ChartPieDonutText } from "@/components/ui/pie-chart-donut";
@@ -9,16 +8,23 @@ import { Pagination } from "@/components/ui/pagination";
 
 // Type definition for an expense item
 type Expense = {
+  id: string;
   description: string;
   amount: number;
   date: Date;
-  category: string;
+  category: { name: string };
 };
 
 type PieChartData = {
   categoryName: string;
   visitors: number;
   fill: string;
+};
+
+// ⚠️ เปลี่ยน BarChartData type ให้ date เป็น Date
+type BarChartData = {
+  amount: number;
+  date: string;
 };
 
 type Category = {
@@ -111,14 +117,52 @@ async function fetchPieChartData(): Promise<PieChartData[]> {
   }
 }
 
-export default async function DashboardPage({ searchParams }: any) {
-  const sortBy = (searchParams?.sortBy as string) || "date";
-  const dateFilter = (searchParams?.date as string) || undefined;
-  const page = parseInt(searchParams?.page as string) || 1;
-  const limit = parseInt(searchParams?.limit as string) || 10;
+// ⚠️ แก้ไขฟังก์ชันนี้ให้ถูกต้อง
+async function fetchBarChartData(): Promise<BarChartData[]> {
+  try {
+    const response = await fetch(
+      `${process.env.API_URL}/expenses/bar-chart-summary`,
+      {
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch bar chart data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const barChartData: BarChartData[] = data.data.map(
+      (expense: { amount: number; date: string }) => ({
+        amount: expense.amount,
+        date: new Date(expense.date), // ⚠️ แปลง date string ที่ได้จาก API เป็น Date object
+      })
+    );
+
+    return barChartData;
+  } catch (error) {
+    console.error("Error fetching bar chart data", error);
+    return [];
+  }
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    sortBy: string;
+    date: string;
+    page: string | any;
+    limit: string | any;
+  }>;
+}) {
+  const { sortBy, date, page, limit } = await searchParams;
+
+  const dateFilter = (date as string) || undefined;
 
   const expenseData = await fetchExpenses(sortBy, dateFilter, page, limit);
   const pieChartData: PieChartData[] = await fetchPieChartData();
+  const barChartData: BarChartData[] = await fetchBarChartData();
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -146,7 +190,7 @@ export default async function DashboardPage({ searchParams }: any) {
             <ChartPieDonutText chartData={pieChartData} />
           </div>
           <div className="bg-white rounded-xl shadow-sm p-6 border">
-            <ChartBarInteractive />
+            <ChartBarInteractive chartData={barChartData} />
           </div>
         </div>
 

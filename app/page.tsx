@@ -1,10 +1,11 @@
-import { Filter, Search } from "lucide-react";
-import Link from "next/link"; // Use Link for navigation
+// DashboardPage.tsx
 
+import Link from "next/link"; // Use Link for navigation
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/ui/columns";
 import { ChartPieDonutText } from "@/components/ui/pie-chart-donut";
-import { ChartLineLabel } from "@/components/ui/chart-line-label";
+import { ChartBarInteractive } from "@/components/ui/chart-bar-interactive";
+import { DatePickerWithFilter } from "@/components/ui/date-picker";
 
 // Type definition for an expense item
 type Expense = {
@@ -26,9 +27,20 @@ type Category = {
 };
 
 // Data fetching function for the server component
-async function fetchExpenses(): Promise<Expense[]> {
+// แก้ไขให้รับ sortBy และ dateFilter
+async function fetchExpenses(
+  sortBy: string = "date",
+  dateFilter?: string
+): Promise<Expense[]> {
   try {
-    const response = await fetch(`${process.env.API_URL}/expenses`, {
+    // สร้าง URL object เพื่อจัดการพารามิเตอร์ได้อย่างง่ายดาย
+    const url = new URL(`${process.env.API_URL}/expenses`);
+    url.searchParams.append("sortBy", sortBy);
+    if (dateFilter) {
+      url.searchParams.append("date", dateFilter);
+    }
+
+    const response = await fetch(url.toString(), {
       cache: "no-store", // Ensures data is always fresh on each request
     });
 
@@ -84,8 +96,17 @@ async function fetchPieChartData(): Promise<PieChartData[]> {
   }
 }
 
-export default async function DashboardPage() {
-  const expenses: Expense[] = await fetchExpenses();
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const sortBy = (searchParams?.sortBy as string) || "date";
+  // ดึงค่า 'date' จาก URL parameter และเก็บไว้ในตัวแปร dateFilter
+  const dateFilter = (searchParams?.date as string) || undefined;
+
+  // ส่งทั้ง sortBy และ dateFilter ไปให้ fetchExpenses
+  const expenses: Expense[] = await fetchExpenses(sortBy, dateFilter);
   const pieChartData: PieChartData[] = await fetchPieChartData();
 
   return (
@@ -101,7 +122,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center space-x-3">
             <Link href="/add-expense">
-              <button className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
                 + เพิ่มรายจ่าย
               </button>
             </Link>
@@ -119,7 +140,7 @@ export default async function DashboardPage() {
 
           {/* Chart 2 - Trend Line */}
           <div className="bg-white rounded-xl shadow-sm p-6 border">
-            <ChartLineLabel />
+            <ChartBarInteractive />
           </div>
         </div>
 
@@ -131,23 +152,11 @@ export default async function DashboardPage() {
                 รายจ่ายล่าสุด
               </h3>
               <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="ค้นหา..."
-                    className="pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <button className="flex items-center space-x-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">
-                  <Filter className="w-4 h-4" />
-                  <span>Filter</span>
-                </button>
+                {/* Datepicker component handle params change */}
+                <DatePickerWithFilter />
               </div>
             </div>
           </div>
-
-          {/* Use DataTable component to display expenses */}
           <DataTable columns={columns} data={expenses} />
         </div>
       </div>

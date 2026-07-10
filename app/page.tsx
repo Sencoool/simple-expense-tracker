@@ -5,6 +5,7 @@ import { ChartPieDonutText } from "@/components/ui/pie-chart-donut";
 import { ChartBarInteractive } from "@/components/ui/chart-bar-interactive";
 import { DatePickerWithFilter } from "@/components/ui/date-picker";
 import { Pagination } from "@/components/ui/pagination";
+import prisma from "@/lib/prisma";
 
 // Type definition for an expense item
 type Expense = {
@@ -27,11 +28,6 @@ type BarChartData = {
   date: string;
 };
 
-type Category = {
-  name: string; // ✅ #9: ใช้ lowercase `string` (ไม่ใช่ `String` wrapper object)
-  expenses: Expense[];
-};
-
 type ExpenseResponse = {
   data: Expense[];
   total: number;
@@ -40,7 +36,7 @@ type ExpenseResponse = {
   totalPages: number;
 };
 
-// Data fetching function for the server component
+// ✅ Data fetching directly via Prisma (no self-referencing HTTP fetch)
 async function fetchExpenses(
   sortBy: string = "date",
   dateFilter?: string,
@@ -48,99 +44,82 @@ async function fetchExpenses(
   limit: number = 10
 ): Promise<ExpenseResponse> {
   try {
-    const url = new URL(`${process.env.API_URL}/expenses`);
-    url.searchParams.append("sortBy", sortBy);
-    url.searchParams.append("page", page.toString());
-    url.searchParams.append("limit", limit.toString());
-
+    const where: any = {};
     if (dateFilter) {
-      url.searchParams.append("date", dateFilter);
+      const startOfDay = new Date(dateFilter);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(dateFilter);
+      endOfDay.setHours(23, 59, 59, 999);
+      where.date = { gte: startOfDay, lte: endOfDay };
     }
 
-    const response = await fetch(url.toString(), {
-      cache: "no-store",
-    });
+    const skip = (page - 1) * limit;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch expenses: ${response.statusText}`);
-    }
-
-    const data: ExpenseResponse = await response.json();
-    const expensesWithFormattedDate = data.data.map((expense: Expense) => ({
-      ...expense,
-      date: new Date(expense.date),
-    }));
+    const [data, totalCount] = await Promise.all([
+      prisma.expense.findMany({
+        where,
+        include: { category: true },
+        orderBy: { date: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.expense.count({ where }),
+    ]);
 
     return {
-      ...data,
-      data: expensesWithFormattedDate,
+      data,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
     };
   } catch (error) {
     console.error("Error fetching expenses", error);
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
-    };
+    return { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
   }
 }
 
-// Data fetching function for the pie chart
+// ✅ Data fetching directly via Prisma
 async function fetchPieChartData(): Promise<PieChartData[]> {
   try {
-    const response = await fetch(
-      `${process.env.API_URL}/categories/pie-chart-summary`,
-      {
-        cache: "no-store",
-      }
-    );
+    const categories = await prisma.category.findMany({
+      include: { expenses: true },
+    });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch pie chart data: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const pieChartData: PieChartData[] = data.data.map(
-      (category: Category, index: number) => ({
-        categoryName: category.name,
-        visitors: category.expenses.length,
-        fill: `var(--chart-${index + 1})`,
-      })
-    );
-
-    return pieChartData;
+    return categories.map((category, index) => ({
+      categoryName: category.name,
+      visitors: category.expenses.length,
+      fill: `var(--chart-${index + 1})`,
+    }));
   } catch (error) {
     console.error("Error fetching pie chart data", error);
     return [];
   }
 }
 
+// ✅ Data fetching directly via Prisma
 async function fetchBarChartData(): Promise<BarChartData[]> {
   try {
-    const response = await fetch(
-      `${process.env.API_URL}/expenses/bar-chart-summary`,
-      {
-        cache: "no-store",
-      }
-    );
+    const expenses = await prisma.expense.findMany({
+      select: { date: true, amount: true },
+      orderBy: { date: "asc" },
+    });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bar chart data: ${response.statusText}`);
-    }
+    const expenseSummary = expenses.reduce((acc, expense) => {
+      const dateKey = new Date(expense.date).toLocaleDateString("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: "Asia/Bangkok",
+      });
+      acc[dateKey] = (acc[dateKey] || 0) + expense.amount;
+      return acc;
+    }, {} as Record<string, number>);
 
-    const data = await response.json();
-    // ✅ คง date ไว้เป็น string ตาม type BarChartData
-    // ChartBarInteractive จะแปลงเป็น Date เองใน tickFormatter
-    const barChartData: BarChartData[] = data.data.map(
-      (expense: { amount: number; date: string }) => ({
-        amount: expense.amount,
-        date: expense.date,
-      })
-    );
-
-    return barChartData;
+    return Object.entries(expenseSummary).map(([date, amount]) => ({
+      date,
+      amount,
+    }));
   } catch (error) {
     console.error("Error fetching bar chart data", error);
     return [];
@@ -161,7 +140,7 @@ export default async function DashboardPage({
 
   const dateFilter = (date as string) || undefined;
 
-  // ✅ #7: validate และ parse page/limit ให้ถูกต้อง พร้อม fallback เป็น default value
+  // ✅ validate และ parse page/limit ให้ถูกต้อง พร้อม fallback เป็น default value
   const parsedPage = Math.max(1, parseInt(page as string) || 1);
   const parsedLimit = Math.max(1, parseInt(limit as string) || 10);
 

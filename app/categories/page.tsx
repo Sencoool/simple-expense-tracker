@@ -22,14 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface Category {
   id: number;
@@ -155,67 +147,86 @@ export default function CategoriesPage() {
             </h1>
             <p className="text-gray-600 mt-1">เพิ่ม แก้ไข หรือลบประเภทค่าใช้จ่าย</p>
           </div>
-          <Button onClick={openCreateDialog} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            เพิ่มประเภท
-          </Button>
         </div>
       </div>
 
       <div className="container mx-auto py-8">
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="bg-white rounded-xl shadow-[0_1px_4px_0_rgba(0,0,0,0.06)] overflow-hidden">
+
+          {/* ── Toolbar */}
+          <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">ประเภทค่าใช้จ่าย</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isLoading ? "กำลังโหลด..." : `${categories.length} ประเภท`}
+              </p>
+            </div>
+            <Button onClick={openCreateDialog} size="sm" className="gap-1.5 cursor-pointer">
+              <PlusCircle className="h-3.5 w-3.5" />
+              เพิ่มประเภท
+            </Button>
+          </div>
+
+          {/* ── Loading */}
           {isLoading ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
               กำลังโหลด...
             </div>
           ) : categories.length === 0 ? (
             // Empty State
-            <div className="flex flex-col items-center justify-center gap-3 h-48 text-muted-foreground">
-              <Tag className="h-10 w-10 opacity-30" />
-              <p className="text-sm">ยังไม่มีประเภทค่าใช้จ่าย</p>
-              <Button variant="outline" size="sm" onClick={openCreateDialog}>
+            <div className="flex flex-col items-center justify-center gap-3 h-48 text-gray-300">
+              <Tag className="h-10 w-10" />
+              <p className="text-sm text-gray-400">ยังไม่มีประเภทค่าใช้จ่าย</p>
+              <Button variant="outline" size="sm" onClick={openCreateDialog} className="cursor-pointer">
                 + เพิ่มประเภทแรก
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ชื่อประเภท</TableHead>
-                  <TableHead className="text-center">จำนวนรายจ่าย</TableHead>
-                  <TableHead className="text-center">การจัดการ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                  <th className="px-6 py-3 text-left font-medium">ชื่อประเภท</th>
+                  <th className="px-6 py-3 text-center font-medium">จำนวนรายจ่าย</th>
+                  <th className="px-6 py-3 text-center font-medium">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
                 {categories.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell className="font-medium">{cat.name}</TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {cat._count.expenses} รายการ
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center gap-2">
+                  <tr key={cat.id} className="hover:bg-gray-50/60 transition-colors group">
+                    <td className="px-6 py-3.5 font-medium text-gray-900">{cat.name}</td>
+                    <td className="px-6 py-3.5 text-center">
+                      <span className="text-gray-400">{cat._count.expenses} รายการ</span>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700 cursor-pointer"
                           onClick={() => openEditDialog(cat)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive hover:text-destructive"
+                          className="h-7 w-7 p-0 text-gray-400 hover:text-rose-600 cursor-pointer"
                           onClick={() => openDeleteDialog(cat)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                {/* Filler rows — keep table height fixed at 10 rows */}
+                {Array.from({ length: Math.max(0, 10 - categories.length) }).map((_, i) => (
+                  <tr key={`filler-${i}`} className="!border-t-transparent">
+                    <td colSpan={3} className="py-3.5" aria-hidden="true" />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

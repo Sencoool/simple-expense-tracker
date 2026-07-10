@@ -8,21 +8,27 @@ export async function GET(request: NextRequest) {
 
     // get Filter from params
     const targetDate = searchParams.get("date");
+    const month = searchParams.get("month"); // 1–12
+    const year = searchParams.get("year");   // e.g. 2025
 
     // object for where condition
     const where: any = {};
     if (targetDate) {
       const startOfDay = new Date(targetDate);
-      startOfDay.setHours(0, 0, 0, 0); // set to 00:00:00.000Z
-
+      startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(targetDate);
-      endOfDay.setHours(23, 59, 59, 999); // set to 23:59:59.999Z
-
-      where.date = {
-        gte: startOfDay, // 00:00
-        lte: endOfDay, // 23:59
-      };
+      endOfDay.setHours(23, 59, 59, 999);
+      where.date = { gte: startOfDay, lte: endOfDay };
+    } else if (month && year) {
+      const monthNum = parseInt(month);
+      const yearNum = parseInt(year);
+      // new Date(year, month-1, 1) = first day of month (month is 0-indexed)
+      const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+      // new Date(year, month, 0) = last day of current month (day 0 of next month)
+      const endOfMonth = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+      where.date = { gte: startOfMonth, lte: endOfMonth };
     }
+
 
     // Get Pagination parameters
     const page = parseInt(searchParams.get("page") || "1"); // Default to page 1

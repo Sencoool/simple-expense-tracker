@@ -8,8 +8,8 @@ import {
 } from "@tanstack/react-table";
 import { ReceiptText } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useState } from "react";
+import { AddExpenseModal } from "@/components/ui/add-expense-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,7 +108,7 @@ export function DataTable<TData, TValue>({
 }
 
 // ─── Recent Transactions Table (Dashboard) ───────────────────────────────────
-type Expense = {
+export type Expense = {
   id: number;
   description: string;
   amount: number;
@@ -117,16 +117,26 @@ type Expense = {
   category: { id: number; name: string };
 };
 
-function ActionCell({ expense }: { expense: Expense }) {
+export function ActionCell({
+  expense,
+  onSuccess,
+}: {
+  expense: Expense;
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleDelete = async () => {
     try {
       const response = await fetch(`/api/expenses/${expense.id}`, {
         method: "DELETE",
       });
-      if (response.ok) router.refresh();
+      if (response.ok) {
+        router.refresh();
+        onSuccess?.();
+      }
     } catch (error) {
       console.error("Error deleting expense:", error);
     } finally {
@@ -145,9 +155,9 @@ function ActionCell({ expense }: { expense: Expense }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
-          <Link href={`/${expense.id}`}>
-            <DropdownMenuItem>แก้ไข</DropdownMenuItem>
-          </Link>
+            <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+              แก้ไข
+            </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-rose-600 focus:text-rose-700"
@@ -177,6 +187,17 @@ function ActionCell({ expense }: { expense: Expense }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Modal */}
+      <AddExpenseModal
+        expenseId={expense.id}
+        initialCategory={String(expense.category.id)}
+        initialAmount={String(expense.amount)}
+        initialDescription={expense.description ?? ""}
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onSuccess={onSuccess}
+      />
     </>
   );
 }
@@ -241,6 +262,12 @@ export function RecentTransactionsTable({
                 <ActionCell expense={expense} />
               </div>
             </td>
+          </tr>
+        ))}
+        {/* Filler rows — keep table height fixed at 5 rows */}
+        {Array.from({ length: Math.max(0, 5 - expenses.length) }).map((_, i) => (
+          <tr key={`filler-${i}`} className="!border-t-transparent">
+            <td colSpan={5} className="py-3.5" aria-hidden="true" />
           </tr>
         ))}
       </tbody>

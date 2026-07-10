@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, ClipboardPlusIcon, Tag } from "lucide-react";
+import { Home, LineChartIcon, Tag } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import {
@@ -25,15 +25,15 @@ const items = [
     icon: Home,
   },
   {
-    title: "เพิ่มรายการค่าใช้จ่ายใหม่",
-    url: "/add-expense",
-    icon: ClipboardPlusIcon,
-  },
-  {
     title: "จัดการประเภท",
     url: "/categories",
     icon: Tag,
   },
+  {
+    title: "สรุปค่าใช้จ่าย",
+    url: "/summary",
+    icon: LineChartIcon,
+  }
 ];
 
 export function AppSidebar() {

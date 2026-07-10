@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { Plus, TrendingUp, TrendingDown, Tag, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Tag, ArrowRight, Link } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { DashboardBarChart } from "@/components/ui/chart-bar-interactive";
 import { DashboardDonutChart } from "@/components/ui/pie-chart-donut";
 import { RecentTransactionsTable } from "@/components/ui/data-table";
+import { AddExpenseModal } from "@/components/ui/add-expense-modal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type PieChartData = { categoryName: string; visitors: number; fill: string };
@@ -165,15 +165,12 @@ export default async function DashboardPage() {
   return (
     <div className="flex-1 min-h-screen w-full min-w-0 bg-[#F9FAFB]">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-100 px-6 md:px-8 py-5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="bg-white shadow-sm border-b px-6 py-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-sm text-gray-400 mt-0.5">ภาพรวมรายจ่ายของคุณ</p>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">ภาพรวมรายจ่ายของคุณ</p>
           </div>
-          
         </div>
       </div>
 
@@ -247,21 +244,9 @@ export default async function DashboardPage() {
               <p className="text-xs text-gray-400 mt-0.5">5 รายการล่าสุด</p>
             </div>
             <div className="flex w-5/6 justify-end">
-              <Link
-            href="/add-expense"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium transition-colors shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            เพิ่มรายจ่าย
-          </Link>
+              <AddExpenseModal />
             </div>
-            <Link
-              href="/?limit=50"
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              ดูทั้งหมด
-              <ArrowRight className="h-3 w-3" />
-            </Link>
+            
           </div>
           <RecentTransactionsTable expenses={recentExpenses as RecentExpense[]} />
         </div>

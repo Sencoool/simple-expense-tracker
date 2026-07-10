@@ -70,6 +70,8 @@ export default function AddExpensePage() {
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // ✅ #3: ป้องกัน form reload หน้าก่อน fetch เสร็จ
+
     console.log("Form submitted with data:", payload);
 
     const submitPayload = {
@@ -81,6 +83,9 @@ export default function AddExpensePage() {
     console.log("Payload to be sent to server:", submitPayload);
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/expenses`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json", // ✅ #4: ให้ API parse JSON body ได้ถูกต้อง
+      },
       body: JSON.stringify(submitPayload),
     });
   };

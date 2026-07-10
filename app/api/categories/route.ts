@@ -3,7 +3,14 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const data = await prisma.category.findMany();
+    const data = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { expenses: true }, // ✅ ส่งจำนวน expense ในแต่ละ category กลับมาด้วย
+        },
+      },
+      orderBy: { id: "asc" },
+    });
     return NextResponse.json({ data }, { status: 200 });
   } catch (error) {
     return NextResponse.json(

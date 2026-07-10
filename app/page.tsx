@@ -21,14 +21,14 @@ type PieChartData = {
   fill: string;
 };
 
-// ⚠️ เปลี่ยน BarChartData type ให้ date เป็น Date
+// date คือ string รูปแบบ "YYYY-MM-DD" ที่ได้จาก API
 type BarChartData = {
   amount: number;
   date: string;
 };
 
 type Category = {
-  name: String;
+  name: string; // ✅ #9: ใช้ lowercase `string` (ไม่ใช่ `String` wrapper object)
   expenses: Expense[];
 };
 
@@ -117,7 +117,6 @@ async function fetchPieChartData(): Promise<PieChartData[]> {
   }
 }
 
-// ⚠️ แก้ไขฟังก์ชันนี้ให้ถูกต้อง
 async function fetchBarChartData(): Promise<BarChartData[]> {
   try {
     const response = await fetch(
@@ -132,10 +131,12 @@ async function fetchBarChartData(): Promise<BarChartData[]> {
     }
 
     const data = await response.json();
+    // ✅ คง date ไว้เป็น string ตาม type BarChartData
+    // ChartBarInteractive จะแปลงเป็น Date เองใน tickFormatter
     const barChartData: BarChartData[] = data.data.map(
       (expense: { amount: number; date: string }) => ({
         amount: expense.amount,
-        date: new Date(expense.date), // ⚠️ แปลง date string ที่ได้จาก API เป็น Date object
+        date: expense.date,
       })
     );
 
@@ -160,7 +161,11 @@ export default async function DashboardPage({
 
   const dateFilter = (date as string) || undefined;
 
-  const expenseData = await fetchExpenses(sortBy, dateFilter, page, limit);
+  // ✅ #7: validate และ parse page/limit ให้ถูกต้อง พร้อม fallback เป็น default value
+  const parsedPage = Math.max(1, parseInt(page as string) || 1);
+  const parsedLimit = Math.max(1, parseInt(limit as string) || 10);
+
+  const expenseData = await fetchExpenses(sortBy, dateFilter, parsedPage, parsedLimit);
   const pieChartData: PieChartData[] = await fetchPieChartData();
   const barChartData: BarChartData[] = await fetchBarChartData();
 

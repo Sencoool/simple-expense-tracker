@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Home, ClipboardPlusIcon } from "lucide-react";
+import Image from "next/image";
+import { Home, ClipboardPlusIcon, Tag } from "lucide-react";
 
 import {
   Sidebar,
@@ -24,14 +25,34 @@ const items = [
     url: "add-expense",
     icon: ClipboardPlusIcon,
   },
+  {
+    title: "จัดการประเภท",
+    url: "/categories",
+    icon: Tag,
+  },
 ];
 
 export function AppSidebar() {
   return (
     <Sidebar>
+      {/* ✅ Logo Section */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b">
+        <Image
+          src="/logo.png"
+          alt="Expense Tracker Logo"
+          width={36}
+          height={36}
+          className="rounded-lg"
+        />
+        <div>
+          <p className="text-sm font-semibold leading-tight">Expense Tracker</p>
+          <p className="text-xs text-muted-foreground leading-tight">จัดการรายจ่ายของคุณ</p>
+        </div>
+      </div>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Expense Tracker</SidebarGroupLabel>
+          <SidebarGroupLabel>เมนู</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

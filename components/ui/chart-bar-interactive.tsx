@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, TooltipProps } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { BarChart2 } from "lucide-react";
 
 import {
   Card,
@@ -32,6 +33,32 @@ export function ChartBarInteractive({
   const total = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.amount, 0);
   }, [chartData]);
+
+  // ✅ Empty state: แสดง placeholder เมื่อไม่มีข้อมูล
+  if (chartData.length === 0) {
+    return (
+      <Card className="py-0">
+        <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
+          <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-0">
+            <CardTitle>กราฟแสดงรายจ่ายรายวัน</CardTitle>
+            <CardDescription>แสดงภาพรวมรายจ่ายในแต่ละวัน</CardDescription>
+          </div>
+          <div className="flex">
+            <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 text-left sm:px-8 sm:py-6">
+              <span className="text-muted-foreground text-xs">ยอดรวม</span>
+              <span className="text-lg leading-none font-bold sm:text-3xl">0 บาท</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 sm:p-6">
+          <div className="flex aspect-auto h-[250px] w-full flex-col items-center justify-center gap-3 text-muted-foreground">
+            <BarChart2 className="h-12 w-12 opacity-30" />
+            <p className="text-sm">ยังไม่มีข้อมูลรายจ่าย</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="py-0">

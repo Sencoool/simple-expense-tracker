@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { ReceiptText } from "lucide-react";
 
 import {
   Table,
@@ -68,8 +69,15 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+              <TableCell
+                colSpan={columns.length}
+                className="h-48 text-center"
+              >
+                <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <ReceiptText className="h-10 w-10 opacity-30" />
+                  <p className="text-sm">ยังไม่มีรายการค่าใช้จ่าย</p>
+                  <p className="text-xs">เริ่มต้นโดยกดปุ่ม &ldquo;+ เพิ่มรายจ่าย&rdquo; ด้านบน</p>
+                </div>
               </TableCell>
             </TableRow>
           )}

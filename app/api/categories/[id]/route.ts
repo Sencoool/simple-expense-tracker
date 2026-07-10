@@ -59,10 +59,23 @@ export async function DELETE(
   try {
     const { id } = await params;
     const categoryId = parseInt(id);
+
+    // ✅ Guard: ตรวจสอบว่ามี Expense ผูกอยู่กับ Category นี้หรือไม่
+    const expenseCount = await prisma.expense.count({
+      where: { categoryId },
+    });
+
+    if (expenseCount > 0) {
+      return NextResponse.json(
+        {
+          error: `ไม่สามารถลบได้ เนื่องจากยังมีรายการค่าใช้จ่าย ${expenseCount} รายการที่ผูกกับประเภทนี้อยู่`,
+        },
+        { status: 409 }
+      );
+    }
+
     await prisma.category.delete({
-      where: {
-        id: categoryId,
-      },
+      where: { id: categoryId },
     });
 
     return NextResponse.json({ message: "Category deleted successfully" });

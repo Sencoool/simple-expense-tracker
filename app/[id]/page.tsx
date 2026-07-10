@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import * as React from "react";
-import { useRouter, useParams, redirect } from "next/navigation";
+import { useRouter, useParams } from "next/navigation"; // ✅ #5: ลบ `redirect` ที่ไม่ได้ใช้ออก
 
 import {
   Select,
@@ -106,14 +106,20 @@ export default function EditExpensePage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/expenses/${expenseId}`,
         {
-          method: "PUT", //
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submitPayload),
         }
       );
-      router.push("/");
+
+      // ✅ #6: redirect เฉพาะเมื่อ response สำเร็จเท่านั้น
+      if (response.ok) {
+        router.push("/");
+      } else {
+        console.error("Failed to update expense:", response.statusText);
+      }
     } catch (error) {
       console.error("Error updating expense:", error);
     }

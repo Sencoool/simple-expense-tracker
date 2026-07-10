@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
+import { PieChart as PieChartIcon } from "lucide-react";
 
 import {
   Card,
@@ -56,6 +57,26 @@ export function ChartPieDonutText({ chartData }: ChartProps) {
 
     return dynamicConfig;
   }, [chartData]);
+
+  // ✅ Empty state: แสดง placeholder เมื่อไม่มีข้อมูล
+  if (chartData.length === 0) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Pie Chart - แสดงจำนวนรายจ่ายแต่ละประเภท</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center pb-0">
+          <div className="flex aspect-square max-h-[250px] w-full flex-col items-center justify-center gap-3 text-muted-foreground">
+            <PieChartIcon className="h-12 w-12 opacity-30" />
+            <p className="text-sm">ยังไม่มีข้อมูลประเภทรายจ่าย</p>
+          </div>
+        </CardContent>
+        <CardFooter className="flex-col gap-2 text-sm">
+          <div className="text-muted-foreground leading-none">แสดงรายจ่ายแต่ละประเภท</div>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col">

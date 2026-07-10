@@ -33,8 +33,72 @@ export type Payment = {
   date: Date;
 };
 
+// ✅ Extracted into a proper React component to follow Rules of Hooks
+// (hooks cannot be called inside table cell render callbacks)
+function ActionCell({ expense }: { expense: Payment }) {
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/expenses/${expense.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        console.log("Expense deleted successfully!");
+        router.refresh();
+      } else {
+        console.error("Failed to delete expense");
+      }
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+    } finally {
+      setShowDeleteDialog(false);
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
+          <Link href={`/${expense.id}`}>
+            <DropdownMenuItem>แก้ไข</DropdownMenuItem>
+          </Link>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
+            ลบ
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
+            <AlertDialogDescription>
+              คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
+              การกระทำนี้ไม่สามารถยกเลิกได้.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>ยืนยัน</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 export const columns: ColumnDef<Payment>[] = [
-  // ... (existing columns)
   {
     accessorKey: "category.name",
     header: "ประเภทการใช้จ่าย",
@@ -84,72 +148,11 @@ export const columns: ColumnDef<Payment>[] = [
   {
     id: "actions",
     header: () => <div className="text-center">การจัดการ</div>,
-    cell: ({ row }) => {
-      const expense = row.original;
-      const router = useRouter();
-      const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-      const handleDelete = async () => {
-        try {
-          const response = await fetch(`/api/expenses/${expense.id}`, {
-            method: "DELETE",
-          });
-
-          if (response.ok) {
-            console.log("Expense deleted successfully!");
-            router.refresh();
-          } else {
-            console.error("Failed to delete expense");
-          }
-        } catch (error) {
-          console.error("Error deleting expense:", error);
-        } finally {
-          setShowDeleteDialog(false);
-        }
-      };
-      return (
-        <div className="text-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
-              <Link href={`/${expense.id}`}>
-                <DropdownMenuItem>แก้ไข</DropdownMenuItem>
-              </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
-                ลบ
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <AlertDialog
-            open={showDeleteDialog}
-            onOpenChange={setShowDeleteDialog}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
-                <AlertDialogDescription>
-                  คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
-                  การกระทำนี้ไม่สามารถยกเลิกได้.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  ยืนยัน
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      );
-    },
+    // ✅ Now just renders the ActionCell component — no hooks here
+    cell: ({ row }) => (
+      <div className="text-center">
+        <ActionCell expense={row.original} />
+      </div>
+    ),
   },
 ];

@@ -75,7 +75,7 @@ export async function POST(request: Request) {
         description,
       },
     });
-    revalidatePath(`${process.env.API_URL}/`);
+    revalidatePath("/"); // ✅ #8: revalidatePath ต้องรับ relative pathname ไม่ใช่ full URL
     return NextResponse.json({ expense }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
